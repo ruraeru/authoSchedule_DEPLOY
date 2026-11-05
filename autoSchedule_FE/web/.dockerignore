@@ -1,0 +1,6 @@
+node_modules
+dist
+*.tsbuildinfo
+# .env.local 에 LLM 키가 있다. 이미지에 넣지 않는다
+.env*
+.git

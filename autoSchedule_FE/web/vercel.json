@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/ai/generate", "destination": "/api/generate" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
+  "functions": { "api/generate.ts": { "maxDuration": 300 } }
+}

@@ -1,0 +1,28 @@
+# nginx 이미지가 시작할 때 ${BACKEND_URL}만 환경변수로 채운다($uri 같은 nginx 변수는 그대로 둔다)
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+
+    location /api/ {
+        proxy_pass ${BACKEND_URL};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # AI 근무표 생성이 3분 넘게 걸린다
+        proxy_read_timeout 600s;
+        proxy_send_timeout 600s;
+    }
+
+    # 해시가 붙은 빌드 파일은 오래 캐시, index.html은 매번 새로
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # 새로고침·직접 접속(/schedules/3 등)을 앱으로
+    location / {
+        try_files $uri /index.html;
+        add_header Cache-Control "no-cache";
+    }
+}

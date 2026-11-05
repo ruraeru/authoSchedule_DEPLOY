@@ -1,0 +1,17 @@
+# 프론트 + 백엔드 + MySQL 한 번에 띄운다. 이 폴더에서: docker compose up -d --build
+# 백엔드·DB 설정은 autoSchedule_BE/docker-compose.yml 과 autoSchedule_BE/.env 를 그대로 쓴다.
+# 프론트: http://<서버>:3002 (/api 는 nginx가 백엔드로 프록시), 백엔드 직접 접근: :8082 (APP_PORT)
+include:
+  - autoSchedule_BE/docker-compose.yml
+
+services:
+  web:
+    build: autoSchedule_FE/web
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-3002}:80"
+    environment:
+      BACKEND_URL: http://app:8080

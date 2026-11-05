@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/* Figma "Design System" 페이지 DS Primitives·DS Semantic 변수와 1:1 대응.
+   틀(사이드바·카드·버튼)은 무채색, 색은 근무 데이터(파트·직원·상태)에만 쓴다. */
+@theme {
+  --font-sans: "Noto Sans KR", system-ui, sans-serif;
+  --color-bg: #f3f5f7;
+  --color-surface: #ffffff;
+  --color-line: #e3e6ea;
+  --color-line-strong: #d1d5db;
+  --color-ink: #1b1d1f;
+  --color-muted: #5c6064;
+  /* 브랜드 = 검정. 선택·주요 버튼·진행률이 무채색으로 남게 한다 */
+  --color-brand: #1b1d1f;
+  --color-brand-subtle: #eceef1;
+  --color-danger: #8f1d18;
+  --color-danger-subtle: #fde2e1;
+  --color-warning: #6b4e00;
+  --color-warning-subtle: #fff1c2;
+  --color-success: #247b50;
+  --color-success-subtle: #e3f4ea;
+  /* 파트: 파스텔 바탕(-bg) + 같은 계열 진한 글자 */
+  --color-open: #6b4e00;
+  --color-open-bg: #fff1c2;
+  --color-middle: #1d5a3c;
+  --color-middle-bg: #d6f2e2;
+  --color-close: #1f416d;
+  --color-close-bg: #dce9fb;
+  --color-staff: #7d3418;
+  --color-staff-bg: #fde4d8;
+}
+
+body {
+  @apply bg-bg text-ink antialiased;
+}
