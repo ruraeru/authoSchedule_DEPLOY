@@ -17,6 +17,7 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.net.http.HttpClient;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -86,7 +87,9 @@ public class OllamaClient implements ScheduleAiClient {
                     .uri(baseUrl + "/api/chat")
                     .contentType(MediaType.APPLICATION_JSON);
             if (!apiKey.isEmpty()) req.header("Authorization", "Bearer " + apiKey);
-            ndjson = req.body(body).retrieve().body(String.class);
+            // Ollama는 application/x-ndjson 을 charset 없이 보낸다. String 으로 받으면 ISO-8859-1로 읽혀 한글이 깨지므로 바이트로 받아 UTF-8로 푼다
+            byte[] raw = req.body(body).retrieve().body(byte[].class);
+            ndjson = raw == null ? "" : new String(raw, StandardCharsets.UTF_8);
         } catch (HttpStatusCodeException e) {
             int status = e.getStatusCode().value();
             log.warn("LLM {} failed: {} {}", model, status, e.getResponseBodyAsString());

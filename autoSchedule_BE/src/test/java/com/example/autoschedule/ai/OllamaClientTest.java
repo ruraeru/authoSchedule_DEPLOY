@@ -1,9 +1,12 @@
 package com.example.autoschedule.ai;
 
 import com.example.autoschedule.exception.ApiException;
+import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -38,6 +41,30 @@ class OllamaClientTest {
                 {"message":{"role":"assistant","content":""},"done":true,"done_reason":"stop"}
                 """;
         assertThat(OllamaClient.joinStream(ndjson, mapper)).isEqualTo("{\"shifts\":[],\"notes\":\"ok\"}");
+    }
+
+    /** Ollama 는 application/x-ndjson 을 charset 없이 보낸다. 한글이 ISO-8859-1로 깨지면 안 된다. */
+    @Test
+    void decodesKoreanAsUtf8WithoutCharset() throws Exception {
+        String line = "{\"message\":{\"content\":\"{\\\"notes\\\":\\\"주 15시간 이내로 배치했습니다\\\"}\"},\"done\":true}\n";
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/api/chat", ex -> {
+            byte[] bytes = line.getBytes(StandardCharsets.UTF_8);
+            ex.getResponseHeaders().set("Content-Type", "application/x-ndjson");
+            ex.sendResponseHeaders(200, bytes.length);
+            try (var out = ex.getResponseBody()) {
+                out.write(bytes);
+            }
+        });
+        server.start();
+        try {
+            OllamaClient client = new OllamaClient(mapper, "http://127.0.0.1:" + server.getAddress().getPort(),
+                    "m", "", 1024, 10);
+            assertThat(client.generate("sys", List.of(ScheduleAiClient.Turn.user("u")), AiPromptBuilder.responseSchema()))
+                    .isEqualTo("{\"notes\":\"주 15시간 이내로 배치했습니다\"}");
+        } finally {
+            server.stop(0);
+        }
     }
 
     @Test
