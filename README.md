@@ -89,6 +89,7 @@ docker compose exec db sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" autosche
 ## HTTPS
 
 공개 서비스는 앞에 리버스 프록시(Caddy, nginx, Cloudflare 등)를 두고 `3002`로 넘긴다.
+- 프록시는 `Host`와 `X-Forwarded-Proto: https`를 넘겨야 한다(Caddy `reverse_proxy`는 기본). `web`의 nginx가 이 값을 백엔드로 전달한다.
 - `COOKIE_SECURE=true`로 바꾸고 `docker compose up -d`로 다시 띄운다.
 - 프록시의 응답 대기 시간을 **5분 이상**으로 둔다. AI 근무표 생성이 3~4분 걸린다(내장 nginx는 600초).
 - `8082`(백엔드 직접 접근)는 방화벽으로 막아도 된다. 브라우저는 3002만 쓴다.
@@ -101,6 +102,7 @@ docker compose exec db sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" autosche
 | 로그인 후 바로 로그아웃됨 | http인데 `COOKIE_SECURE=true`이면 쿠키가 저장되지 않는다 |
 | AI 생성 실패 "인증을 거절" | `LLM_API_KEY` 확인 |
 | AI 생성 실패 "연결하지 못했거나 시간 초과" | `LLM_BASE_URL` 접속 가능 여부: `curl -H "Authorization: Bearer $LLM_API_KEY" $LLM_BASE_URL/api/tags` |
+| 가입·로그인이 `403`, 응답 본문 `Invalid CORS request` | 앞단 HTTPS 프록시가 `X-Forwarded-Proto`를 넘기는지 확인(Caddy·nginx는 기본으로 넘김). 백엔드가 요청을 http로 보면 https Origin과 출처가 달라 막는다 |
 | 화면 새로고침 시 404 | `web` 이미지가 최신인지 (`docker compose up -d --build web`) |
 
 ## 로컬 개발

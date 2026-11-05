@@ -1,4 +1,12 @@
 # nginx 이미지가 시작할 때 ${BACKEND_URL}만 환경변수로 채운다($uri 같은 nginx 변수는 그대로 둔다)
+
+# 앞단 HTTPS 프록시(Caddy 등)가 준 원래 프로토콜을 백엔드에 그대로 넘긴다. 없으면 이 nginx의 프로토콜.
+# 백엔드가 요청을 https로 봐야 브라우저 Origin(https://...)과 같은 출처로 판정해 CORS 403을 내지 않는다
+map $http_x_forwarded_proto $forwarded_proto {
+    default $http_x_forwarded_proto;
+    ''      $scheme;
+}
+
 server {
     listen 80;
     root /usr/share/nginx/html;
@@ -8,7 +16,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $forwarded_proto;
         # AI 근무표 생성이 3분 넘게 걸린다
         proxy_read_timeout 600s;
         proxy_send_timeout 600s;
