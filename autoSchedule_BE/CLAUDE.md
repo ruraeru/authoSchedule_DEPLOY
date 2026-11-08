@@ -56,7 +56,7 @@ Required env vars: `JWT_SECRET` (>= 32 bytes; the app won't start without it) an
 ## AI generation
 
 `POST /api/schedules/generate` runs `ai/AiSchedulePipeline` (prompt, validation, one correction round, DRAFT save) through a `ScheduleAiClient`, picked by `AI_PROVIDER`:
-- `ollama` (default): `ai/OllamaClient` calls an Ollama-compatible `/api/chat` at `LLM_BASE_URL` (default `https://ai.ruraeru.xyz`) with model `LLM_MODEL` (default `qwen3.5:9b`) and `Authorization: Bearer LLM_API_KEY`. It streams (NDJSON) so proxies don't cut idle connections, and converts the Gemini-style response schema (`AiPromptBuilder.responseSchema()`) to JSON Schema for `format`. `LLM_NUM_CTX` (default 16384), `LLM_TIMEOUT_SECONDS` (default 300). One run with qwen 9b took about 3.5 minutes.
+- `ollama` (default): `ai/OllamaClient` calls an Ollama-compatible `/api/chat` at `LLM_BASE_URL` (default `https://ai.ruraeru.xyz`) with model `LLM_MODEL` (default `qwen3.5:9b`) and `Authorization: Bearer LLM_API_KEY`. Request options: `think:false`, `stream:false` (one JSON response; nothing is sent until generation ends, so a proxy in front of the LLM server must allow a long idle read), `options.num_ctx`, `keep_alive:"30m"`. It converts the Gemini-style response schema (`AiPromptBuilder.responseSchema()`) to JSON Schema for `format`. `LLM_NUM_CTX` (default 8192), `LLM_TIMEOUT_SECONDS` (default 300). One run with qwen 9b took about 3.5 minutes.
 - `gemini`: `ai/GeminiClient`, needs `GEMINI_API_KEY`.
 
 ## Store / staff API (frontend shape)

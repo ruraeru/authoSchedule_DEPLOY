@@ -26,7 +26,7 @@ import java.util.Map;
 
 /**
  * Ollama 호환 서버(LLM_BASE_URL)의 /api/chat 호출. 프론트 api/generate.ts 의 generateJson 과 같은 방식이다.
- * stream:true 로 받아(NDJSON) 응답이 오래 걸려도 중간 프록시가 연결을 끊지 않게 하고, message.content 조각을 이어 붙인다.
+ * stream:false 로 응답 JSON 한 개를 받아 message.content 를 꺼낸다(joinStream 은 NDJSON 한 줄짜리로 그대로 처리한다).
  * ai.provider=gemini 이면 이 대신 {@link GeminiClient} 를 쓴다.
  */
 @Slf4j
@@ -51,7 +51,7 @@ public class OllamaClient implements ScheduleAiClient {
                         @Value("${llm.base-url:https://ai.ruraeru.xyz}") String baseUrl,
                         @Value("${llm.model:qwen3.5:9b}") String model,
                         @Value("${llm.api-key:}") String apiKey,
-                        @Value("${llm.num-ctx:16384}") int numCtx,
+                        @Value("${llm.num-ctx:8192}") int numCtx,
                         @Value("${llm.timeout-seconds:300}") long timeoutSeconds) {
         this.mapper = mapper;
         this.baseUrl = baseUrl.replaceAll("/+$", "");
@@ -77,8 +77,8 @@ public class OllamaClient implements ScheduleAiClient {
         body.put("messages", messages);
         body.put("format", toJsonSchema(responseSchema));
         body.put("think", false);
-        body.put("stream", true);
-        body.put("options", Map.of("num_ctx", numCtx, "temperature", 0.3));
+        body.put("stream", false);
+        body.put("options", Map.of("num_ctx", numCtx));
         body.put("keep_alive", "30m");
 
         String ndjson;
@@ -87,7 +87,7 @@ public class OllamaClient implements ScheduleAiClient {
                     .uri(baseUrl + "/api/chat")
                     .contentType(MediaType.APPLICATION_JSON);
             if (!apiKey.isEmpty()) req.header("Authorization", "Bearer " + apiKey);
-            // Ollama는 application/x-ndjson 을 charset 없이 보낸다. String 으로 받으면 ISO-8859-1로 읽혀 한글이 깨지므로 바이트로 받아 UTF-8로 푼다
+            // Ollama는 charset 없이 보낼 때가 있다(stream 이면 application/x-ndjson). String 으로 받으면 ISO-8859-1로 읽혀 한글이 깨지므로 바이트로 받아 UTF-8로 푼다
             byte[] raw = req.body(body).retrieve().body(byte[].class);
             ndjson = raw == null ? "" : new String(raw, StandardCharsets.UTF_8);
         } catch (HttpStatusCodeException e) {
